@@ -50,7 +50,42 @@ export default function Home() {
         </p>
 
         <div className="output">
-          <pre>{JSON.stringify(value, null, 2)}</pre>
+          {value?.data && Array.isArray(value.data) ? (
+            <>
+              <p>
+                <b>Message:</b> {value.message} |{" "}
+                <b>
+                  Cached:{" "}
+                  <span
+                    style={{
+                      color: value.isCached === "yes" ? "green" : "red",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {value.isCached}
+                  </span>
+                </b>
+              </p>
+              <table className="data-table" border="1" cellPadding="6">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {value.data.map((row, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{row.data}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <pre>{JSON.stringify(value, null, 2)}</pre>
+          )}
         </div>
       </section>
     </main>
