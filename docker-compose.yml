@@ -19,14 +19,14 @@ services:
     build: ./backend/.
     environment:
       - PORT=5001
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_CHANNEL=${REDIS_CHANNEL}
       - MYSQL_HOST=${MYSQL_HOST}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USERNAME=${MYSQL_USERNAME}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
       - MYSQL_TABLE=${MYSQL_TABLE}
     ports:
       - '5001:5001'
@@ -36,47 +36,62 @@ services:
       - mysqldb
       - redis
       - worker-server
+    secrets:
+      - redis_password
+      - mysql_password
 
   worker-server:
     container_name: "worker-server"
     build: ./worker-server/.
     environment:
       - PORT=5002
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_CHANNEL=${REDIS_CHANNEL}
       - MYSQL_HOST=${MYSQL_HOST}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USERNAME=${MYSQL_USERNAME}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
       - MYSQL_TABLE=${MYSQL_TABLE}
     networks:
       - mynetwork
     depends_on:
       - mysqldb
       - redis
+    secrets:
+      - redis_password
+      - mysql_password
 
   mysqldb:
     container_name: "mysqldb"
     build: ./mysqldb/.
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-    # ports:
-    #   - '3306:3306'
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
     networks:
       - mynetwork
+    secrets:
+      - mysql_root_password
 
   redis:
     container_name: "redis-db"
     image: "redis:latest"
-   # restart: always
-    command: redis-server --save 20 1 --loglevel warning --requirepass mypassword
-    # ports:
-    #   - '6379:6379'
+    command: >
+      sh -c "exec redis-server --save 20 1 --loglevel warning
+      --requirepass $$(cat /run/secrets/redis_password)"
     networks:
       - mynetwork
+    secrets:
+      - redis_password
 
 networks:
   mynetwork:
     driver: bridge
+
+secrets:
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_password:
+    file: ./secrets/mysql_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt

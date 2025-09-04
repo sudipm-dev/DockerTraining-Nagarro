@@ -4,14 +4,22 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "redis";
 import mysql from "mysql2/promise";
+import fs from "fs";
 
 dotenv.config();
 // environment variables
 const expressPort = process.env.PORT || 5001;
 
+function getSecret(envVar, fileVar) {
+  if (process.env[fileVar]) {
+    return fs.readFileSync(process.env[fileVar], "utf-8").trim();
+  }
+  return process.env[envVar] || "";
+}
+
 // redis
 const redisUsername = process.env.REDIS_USERNAME || "";
-const redisPassword = process.env.REDIS_PASSWORD || "";
+const redisPassword = getSecret("REDIS_PASSWORD", "REDIS_PASSWORD_FILE");
 const redisHost = process.env.REDIS_HOST || "";
 const redisPort = process.env.REDIS_PORT || "";
 const redisChannel = process.env.REDIS_CHANNEL || "";
@@ -19,18 +27,21 @@ const redisChannel = process.env.REDIS_CHANNEL || "";
 // mysql
 const sqlHost = process.env.MYSQL_HOST || "";
 const sqlUser = process.env.MYSQL_USERNAME || "";
-const sqlPassword = process.env.MYSQL_PASSWORD || "";
+const sqlPassword = getSecret("MYSQL_PASSWORD", "MYSQL_PASSWORD_FILE");
+const sqlRootPassword = getSecret("MYSQL_ROOT_PASSWORD", "MYSQL_ROOT_PASSWORD_FILE");
 const sqlDatabase = process.env.MYSQL_DATABASE || "";
 const sqlTable = process.env.MYSQL_TABLE || "";
 
+
 // configs
-const redisUrl = `redis://${redisUsername}:${redisPassword}@${redisHost}:${redisPort}`;
+const redisUrl = `redis://:${redisPassword}@${redisHost}:${redisPort}`;
 const dbConfig = {
-  host: sqlHost,
-  user: sqlUser,
-  password: sqlPassword,
-  database: sqlDatabase,
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USERNAME,
+  password: sqlPassword || sqlRootPassword,
+  database: process.env.MYSQL_DATABASE,
 };
+
 
 const redisClient = createClient({ url: redisUrl });
 

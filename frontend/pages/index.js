@@ -30,7 +30,7 @@ export default function Home() {
     <main className="app-container">
       <section className="card">
         <h2 className="title">🚀 My Docker Project </h2>
-        <h4 className="Author">🚀 By Sudip </h4>
+        <h4 className="Author">By Sudip </h4>
 
         <form onSubmit={createData} className="form">
           <input
