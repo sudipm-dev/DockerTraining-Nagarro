@@ -1,39 +1,49 @@
-# ---------- Builder Stage ----------
+# ---------- Stage 1: Builder ----------
     FROM node:14-alpine AS builder
 
-    # set working directory
+    # Set working directory
     WORKDIR /app
     
-    # copy only package files and install dependencies
+    # Copy only package files first (better caching)
     COPY package.json yarn.lock ./
+    
+    # Install all dependencies (dev + prod for build)
     RUN yarn install --production=false
     
-    # copy rest of the source code
+    # Copy the rest of the source code
     COPY . .
     
-    
-    # ---------- Runtime Stage ----------
+    # ---------- Stage 2: Runtime ----------
     FROM node:14-alpine AS runtime
     
-    # set working directory
+    # Set working directory
     WORKDIR /app
     
-    # Create a non-root user and group
+    # Create non-root user and group
     RUN addgroup -S appgroup && adduser -S appuser -G appgroup
     
-    # copy only production dependencies from builder
+    # Copy only production files from builder
     COPY --from=builder /app/node_modules ./node_modules
     COPY --from=builder /app/package.json ./package.json
     COPY --from=builder /app/index.js ./index.js
-    # (copy other necessary files like dist/, public/ etc.)
+    # If you have dist/ or public/, uncomment:
     # COPY --from=builder /app/dist ./dist
+    # COPY --from=builder /app/public ./public
     
-    # Change ownership of /app so appuser can access it
-    RUN chown -R appuser:appgroup /app
+    # Set ownership and restrict permissions
+    RUN chown -R appuser:appgroup /app \
+        && chmod 644 /app/package.json \
+        && chmod 644 /app/index.js \
+        && chmod -R 755 /app/node_modules \
+        && chmod -R 755 /app/dist || true \
+        && chmod -R 755 /app/public || true
     
     # Switch to non-root user
     USER appuser
     
-    # start the server
+    # Expose port (if needed for clarity)
+    EXPOSE 3000
+    
+    # Start the server
     CMD ["node", "index.js"]
     

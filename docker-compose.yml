@@ -13,6 +13,8 @@ services:
       - mysqldb
       - backend
       - worker-server
+    volumes:
+      - frontend_logs:/app/logs   # example: store logs
 
   backend:
     container_name: "backend"
@@ -39,6 +41,9 @@ services:
     secrets:
       - redis_password
       - mysql_password
+    volumes:
+      - backend_logs:/app/logs   # example: logs
+      - backend_uploads:/app/uploads  # example: user uploads
 
   worker-server:
     container_name: "worker-server"
@@ -62,6 +67,8 @@ services:
     secrets:
       - redis_password
       - mysql_password
+    volumes:
+      - worker_logs:/app/logs
 
   mysqldb:
     container_name: "mysqldb"
@@ -72,6 +79,8 @@ services:
       - mynetwork
     secrets:
       - mysql_root_password
+    volumes:
+      - mysql_data:/var/lib/mysql   # persist DB files
 
   redis:
     container_name: "redis-db"
@@ -83,6 +92,8 @@ services:
       - mynetwork
     secrets:
       - redis_password
+    volumes:
+      - redis_data:/data   # persist Redis cache
 
 networks:
   mynetwork:
@@ -95,3 +106,11 @@ secrets:
     file: ./secrets/mysql_password.txt
   redis_password:
     file: ./secrets/redis_password.txt
+
+volumes:
+  mysql_data:
+  redis_data:
+  frontend_logs:
+  backend_logs:
+  backend_uploads:
+  worker_logs:
